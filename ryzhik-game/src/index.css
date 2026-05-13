@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --color-warm-50: #fdf8f0;
+  --color-warm-100: #f5e6d3;
+  --color-warm-200: #e8d0b3;
+  --color-warm-300: #d4a574;
+  --color-warm-400: #c4884a;
+  --color-warm-500: #a0673a;
+  --color-warm-600: #7a4f2d;
+  --color-warm-700: #5a3a21;
+  --color-warm-800: #3d2815;
+  --color-warm-900: #1f140a;
+  --color-cozy-bg: #1a1a2e;
+  --color-cozy-card: rgba(255, 255, 255, 0.08);
+  --color-cozy-border: rgba(255, 255, 255, 0.12);
+  --color-cozy-text: #e8dcc8;
+  --color-cozy-accent: #f4a460;
+  --color-cozy-green: #7cb342;
+  --color-cozy-blue: #5c8db5;
+  --color-cozy-pink: #e091a8;
+  --font-game: 'Georgia', 'Palatino Linotype', 'Book Antiqua', serif;
+}
+
+body {
+  font-family: var(--font-game);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+}
+
+.glass-panel {
+  background: rgba(20, 20, 40, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.glass-button {
+  background: rgba(244, 164, 96, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(244, 164, 96, 0.3);
+  border-radius: 12px;
+  color: #f4a460;
+  transition: all 0.3s ease;
+}
+.glass-button:hover {
+  background: rgba(244, 164, 96, 0.35);
+  border-color: rgba(244, 164, 96, 0.5);
+  transform: translateY(-1px);
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
