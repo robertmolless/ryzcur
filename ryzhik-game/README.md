@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# 🐱 Рыжик и Старый Загородный Дом
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Атмосферная narrative cozy life-sim игра про доброго рыжего кота по имени Рыжик, который живёт возле старого загородного дома.
 
-Currently, two official plugins are available:
+## Технологии
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React** + **TypeScript** + **Vite** — frontend framework
+- **Phaser 3** — 2D game engine с Canvas рендерингом
+- **Zustand** — state management
+- **Tailwind CSS** — UI стилизация
+- **Web Audio API** — процедурное аудио
+- **GitHub Pages** — деплой
 
-## React Compiler
+## Запуск
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd ryzhik-game
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Откройте `http://localhost:5173`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Сборка
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+## Архитектура
+
+```
+src/
+  game/
+    scenes/      — Phaser сцены (GameScene — основная)
+    systems/     — Игровые системы (аудио)
+    data/        — Данные (NPC, квесты, локации)
+    utils/       — Утилиты (цвета, освещение)
+  ui/
+    components/  — React компоненты UI
+  store/         — Zustand хранилище
+```
+
+## Возможности
+
+- 5 локаций: Двор, Дом, Лес, Пруд, Теплица
+- 10 NPC с уникальными внешностями и диалогами
+- 10 квестов с прогрессией
+- Цикл дня/ночи с реалистичным освещением
+- Система погоды (солнце, дождь, гроза, туман, ветер)
+- Процедурные частицы (светлячки, дождь, листья)
+- Коллекции (кассеты, фото, дневник, наклейки)
+- Система дружбы с NPC
+- Процедурное ambient аудио
+- Glassmorphism UI
+- Mobile-friendly

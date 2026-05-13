@@ -635,12 +635,18 @@ export class GameScene extends Phaser.Scene {
     const tod = store.timeOfDay;
     const ox = -this.cameraX * 0.3;
 
-    if (loc === 'yard' || loc === 'house') {
+    if (loc === 'yard') {
       this.drawTrees(w, h, ox, tod, 'bg');
+      this.drawHouseExterior(w, h, tod);
+      this.drawYardDetails(w, h, tod);
+    } else if (loc === 'house') {
+      this.drawHouseInterior(w, h, tod);
     } else if (loc === 'forest') {
       this.drawDenseForest(w, h, ox, tod);
+      this.drawForestDetails(w, h, tod);
     } else if (loc === 'pond') {
       this.drawPondBg(w, h, tod);
+      this.drawPondDetails(w, h, tod);
     } else if (loc === 'greenhouse') {
       this.drawGreenhouseBg(w, h, tod);
     }
@@ -751,6 +757,366 @@ export class GameScene extends Phaser.Scene {
       const ly = y - 15 - i * 6;
       this.mainGfx.fillStyle(color, alpha);
       this.mainGfx.fillEllipse(lx, ly, 12, 8);
+    }
+  }
+
+  private drawHouseExterior(w: number, _h: number, tod: TimeOfDay) {
+    const ox = -this.cameraX * 0.2;
+    const houseX = w * 0.45 + ox;
+    const houseY = this.worldHeight * 0.28;
+    const houseW = 240;
+    const houseH = 160;
+
+    const wallColor = tod === 'night' ? 0x3a3028 : tod === 'evening' ? 0x6a5a48 : 0x8a7a68;
+    const roofColor = tod === 'night' ? 0x2a1a12 : tod === 'evening' ? 0x5a3020 : 0x7a4030;
+    const trimColor = tod === 'night' ? 0x4a3a28 : 0x9a8a78;
+
+    this.bgGfx.fillStyle(wallColor, 0.95);
+    this.bgGfx.fillRect(houseX - houseW / 2, houseY, houseW, houseH);
+
+    this.bgGfx.fillStyle(roofColor, 0.95);
+    this.bgGfx.fillTriangle(
+      houseX - houseW / 2 - 20, houseY,
+      houseX + houseW / 2 + 20, houseY,
+      houseX, houseY - 60
+    );
+    this.bgGfx.fillStyle(lerpColor(roofColor, 0x000000, 0.15), 0.9);
+    this.bgGfx.fillTriangle(
+      houseX - houseW / 2 - 20, houseY,
+      houseX, houseY,
+      houseX, houseY - 60
+    );
+
+    this.bgGfx.lineStyle(2, trimColor, 0.6);
+    this.bgGfx.strokeRect(houseX - houseW / 2, houseY, houseW, houseH);
+
+    const windowGlow = tod === 'night' ? 0.6 : tod === 'evening' ? 0.3 : 0.1;
+    const windowColor = tod === 'night' ? 0xFFD080 : 0x88AACC;
+
+    const windows = [
+      { x: houseX - 60, y: houseY + 30, w: 30, h: 35 },
+      { x: houseX + 30, y: houseY + 30, w: 30, h: 35 },
+      { x: houseX - 60, y: houseY + 85, w: 30, h: 35 },
+      { x: houseX + 30, y: houseY + 85, w: 30, h: 35 },
+    ];
+
+    for (const win of windows) {
+      this.bgGfx.fillStyle(windowColor, windowGlow + 0.1);
+      this.bgGfx.fillRect(win.x, win.y, win.w, win.h);
+      this.bgGfx.lineStyle(1, trimColor, 0.7);
+      this.bgGfx.strokeRect(win.x, win.y, win.w, win.h);
+      this.bgGfx.lineBetween(win.x + win.w / 2, win.y, win.x + win.w / 2, win.y + win.h);
+      this.bgGfx.lineBetween(win.x, win.y + win.h / 2, win.x + win.w, win.y + win.h / 2);
+
+      if (tod === 'night' || tod === 'evening') {
+        this.lightGfx.fillStyle(0xFFD080, 0.04);
+        this.lightGfx.fillCircle(win.x + win.w / 2, win.y + win.h / 2, 40);
+      }
+    }
+
+    this.bgGfx.fillStyle(lerpColor(wallColor, 0x000000, 0.2), 0.9);
+    this.bgGfx.fillRect(houseX - 15, houseY + 100, 30, 60);
+    this.bgGfx.fillStyle(0xCCA030, 0.8);
+    this.bgGfx.fillCircle(houseX + 10, houseY + 130, 2);
+
+    const verandaColor = tod === 'night' ? 0x2a2018 : 0x6a5a48;
+    this.bgGfx.fillStyle(verandaColor, 0.8);
+    this.bgGfx.fillRect(houseX - houseW / 2 - 10, houseY + houseH - 5, houseW + 20, 10);
+
+    this.bgGfx.fillStyle(verandaColor, 0.6);
+    for (let i = 0; i < 4; i++) {
+      const px = houseX - houseW / 2 + i * (houseW / 3);
+      this.bgGfx.fillRect(px, houseY + houseH - 5, 4, 20);
+    }
+
+    this.bgGfx.fillStyle(roofColor, 0.7);
+    this.bgGfx.fillRect(houseX - houseW / 2 - 10, houseY + houseH - 15, houseW + 20, 5);
+
+    const chimneyX = houseX + 40;
+    this.bgGfx.fillStyle(lerpColor(wallColor, 0x000000, 0.1), 0.9);
+    this.bgGfx.fillRect(chimneyX, houseY - 55, 18, 40);
+
+    if (tod === 'evening' || tod === 'night') {
+      for (let i = 0; i < 3; i++) {
+        const smokeY = houseY - 60 - i * 15 - Math.sin(this.globalTime + i) * 5;
+        const smokeX = chimneyX + 9 + Math.sin(this.globalTime * 0.5 + i * 2) * 8;
+        this.bgGfx.fillStyle(0x888888, 0.12 - i * 0.03);
+        this.bgGfx.fillCircle(smokeX, smokeY, 8 + i * 4);
+      }
+    }
+  }
+
+  private drawYardDetails(_w: number, _h: number, tod: TimeOfDay) {
+    const ox = -this.cameraX;
+    const oy = -this.cameraY;
+
+    const fenceColor = tod === 'night' ? 0x2a2018 : 0x6a5a40;
+    for (let i = 0; i < 15; i++) {
+      const fx = 80 + i * 75 + ox;
+      const fy = this.worldHeight * 0.52 + oy;
+      this.mainGfx.fillStyle(fenceColor, 0.5);
+      this.mainGfx.fillRect(fx, fy - 20, 3, 25);
+      this.mainGfx.fillRect(fx - 1, fy - 18, 5, 2);
+    }
+    this.mainGfx.lineStyle(1.5, fenceColor, 0.4);
+    this.mainGfx.lineBetween(80 + ox, this.worldHeight * 0.52 - 12 + oy, 80 + 14 * 75 + ox, this.worldHeight * 0.52 - 12 + oy);
+    this.mainGfx.lineBetween(80 + ox, this.worldHeight * 0.52 - 5 + oy, 80 + 14 * 75 + ox, this.worldHeight * 0.52 - 5 + oy);
+
+    if (tod === 'night' || tod === 'evening') {
+      const garlandPositions = [150, 300, 450, 600, 750, 900];
+      for (let i = 0; i < garlandPositions.length - 1; i++) {
+        const x1 = garlandPositions[i] + ox;
+        const x2 = garlandPositions[i + 1] + ox;
+        const midY = this.worldHeight * 0.45 + 10 + oy;
+
+        for (let t = 0; t <= 1; t += 0.1) {
+          const bx = x1 + (x2 - x1) * t;
+          const by = midY + Math.sin(t * Math.PI) * 12;
+          this.mainGfx.lineStyle(0.5, 0x333333, 0.3);
+          if (t > 0) {
+            const pbx = x1 + (x2 - x1) * (t - 0.1);
+            const pby = midY + Math.sin((t - 0.1) * Math.PI) * 12;
+            this.mainGfx.lineBetween(pbx, pby, bx, by);
+          }
+
+          const colors = [0xFF6B6B, 0xFFD93D, 0x6BCB77, 0x4D96FF, 0xFF9FF3];
+          const bulbColor = colors[Math.floor((i * 10 + t * 10) % colors.length)];
+          const flicker = 0.5 + Math.sin(this.globalTime * 3 + i + t * 5) * 0.3;
+          this.fgGfx.fillStyle(bulbColor, flicker);
+          this.fgGfx.fillCircle(bx, by, 2.5);
+          this.fgGfx.fillStyle(bulbColor, flicker * 0.2);
+          this.fgGfx.fillCircle(bx, by, 6);
+        }
+      }
+    }
+
+    const bikeX = 850 + ox;
+    const bikeY = this.worldHeight * 0.65 + oy;
+    const bikeColor = tod === 'night' ? 0x3a2a1a : 0x7a5a3a;
+    this.mainGfx.lineStyle(2, bikeColor, 0.6);
+    this.mainGfx.strokeCircle(bikeX - 12, bikeY, 10);
+    this.mainGfx.strokeCircle(bikeX + 12, bikeY, 10);
+    this.mainGfx.lineBetween(bikeX - 12, bikeY, bikeX, bikeY - 12);
+    this.mainGfx.lineBetween(bikeX, bikeY - 12, bikeX + 12, bikeY);
+    this.mainGfx.lineBetween(bikeX, bikeY - 12, bikeX - 3, bikeY - 18);
+  }
+
+  private drawHouseInterior(w: number, h: number, tod: TimeOfDay) {
+    const floorColor = tod === 'night' ? 0x2a2018 : 0x6a5a48;
+    const wallColor = tod === 'night' ? 0x2a2828 : 0x8a8278;
+    const ceilingColor = tod === 'night' ? 0x1a1818 : 0x7a7268;
+
+    this.bgGfx.fillStyle(ceilingColor, 1);
+    this.bgGfx.fillRect(0, 0, w, h * 0.15);
+
+    this.bgGfx.fillStyle(wallColor, 1);
+    this.bgGfx.fillRect(0, h * 0.15, w, h * 0.4);
+
+    const patternColor = lerpColor(wallColor, 0xFFFFFF, 0.03);
+    for (let x = 0; x < w; x += 30) {
+      for (let y = h * 0.15; y < h * 0.55; y += 30) {
+        this.bgGfx.fillStyle(patternColor, 0.3);
+        this.bgGfx.fillRect(x + 10, y + 10, 8, 8);
+      }
+    }
+
+    this.bgGfx.fillStyle(floorColor, 1);
+    this.bgGfx.fillRect(0, h * 0.55, w, h * 0.45);
+
+    const plankColor = lerpColor(floorColor, 0x000000, 0.05);
+    for (let x = 0; x < w; x += 60) {
+      this.bgGfx.lineStyle(0.5, plankColor, 0.3);
+      this.bgGfx.lineBetween(x, h * 0.55, x, h);
+    }
+
+    this.bgGfx.lineStyle(2, lerpColor(wallColor, 0x000000, 0.1), 0.5);
+    this.bgGfx.lineBetween(0, h * 0.55, w, h * 0.55);
+
+    const moldingColor = tod === 'night' ? 0x3a3028 : 0x9a8a78;
+    this.bgGfx.fillStyle(moldingColor, 0.6);
+    this.bgGfx.fillRect(0, h * 0.53, w, 4);
+    this.bgGfx.fillRect(0, h * 0.14, w, 3);
+
+    const windowX = w * 0.8;
+    const windowY = h * 0.2;
+    const windowW = 80;
+    const windowH = 100;
+
+    if (tod === 'night') {
+      this.bgGfx.fillStyle(0x0B0B2A, 0.8);
+    } else if (tod === 'evening') {
+      this.bgGfx.fillStyle(0xFF8C4A, 0.6);
+    } else {
+      this.bgGfx.fillStyle(0x88CCEE, 0.6);
+    }
+    this.bgGfx.fillRect(windowX, windowY, windowW, windowH);
+    this.bgGfx.lineStyle(3, moldingColor, 0.8);
+    this.bgGfx.strokeRect(windowX, windowY, windowW, windowH);
+    this.bgGfx.lineBetween(windowX + windowW / 2, windowY, windowX + windowW / 2, windowY + windowH);
+    this.bgGfx.lineBetween(windowX, windowY + windowH / 2, windowX + windowW, windowY + windowH / 2);
+
+    if (tod === 'day' || tod === 'morning') {
+      this.lightGfx.fillStyle(0xFFFFCC, 0.06);
+      this.lightGfx.beginPath();
+      this.lightGfx.moveTo(windowX, windowY + windowH);
+      this.lightGfx.lineTo(windowX - 60, h);
+      this.lightGfx.lineTo(windowX + windowW + 60, h);
+      this.lightGfx.lineTo(windowX + windowW, windowY + windowH);
+      this.lightGfx.closePath();
+      this.lightGfx.fillPath();
+    }
+
+    const curtainColor = tod === 'night' ? 0x4a2020 : 0x8a4040;
+    this.bgGfx.fillStyle(curtainColor, 0.5);
+    this.bgGfx.fillRect(windowX - 8, windowY - 5, 15, windowH + 10);
+    this.bgGfx.fillRect(windowX + windowW - 7, windowY - 5, 15, windowH + 10);
+
+    const sofaX = 100;
+    const sofaY = h * 0.55 - 35;
+    const sofaColor = tod === 'night' ? 0x2a3a4a : 0x4a6a7a;
+    this.mainGfx.fillStyle(sofaColor, 0.9);
+    this.mainGfx.fillRoundedRect(sofaX, sofaY, 120, 40, 6);
+    this.mainGfx.fillStyle(lerpColor(sofaColor, 0x000000, 0.15), 0.9);
+    this.mainGfx.fillRoundedRect(sofaX, sofaY - 30, 120, 35, 6);
+    this.mainGfx.fillStyle(lerpColor(sofaColor, 0xFFFFFF, 0.1), 0.4);
+    this.mainGfx.fillRoundedRect(sofaX + 10, sofaY + 5, 30, 25, 4);
+    this.mainGfx.fillRoundedRect(sofaX + 50, sofaY + 5, 30, 25, 4);
+
+    const tableX = 350;
+    const tableY = h * 0.55 - 20;
+    const tableColor = tod === 'night' ? 0x3a2a18 : 0x7a5a38;
+    this.mainGfx.fillStyle(tableColor, 0.9);
+    this.mainGfx.fillRoundedRect(tableX, tableY, 80, 25, 3);
+    this.mainGfx.fillRect(tableX + 5, tableY + 22, 5, 25);
+    this.mainGfx.fillRect(tableX + 70, tableY + 22, 5, 25);
+
+    if (tod === 'night' || tod === 'evening') {
+      this.mainGfx.fillStyle(0xCCA030, 0.8);
+      this.mainGfx.fillRect(tableX + 35, tableY - 20, 10, 20);
+      this.mainGfx.fillStyle(0xFF8C00, 0.7);
+      const flicker = Math.sin(this.globalTime * 8) * 2;
+      this.mainGfx.fillTriangle(tableX + 37, tableY - 20, tableX + 43, tableY - 20, tableX + 40, tableY - 28 + flicker);
+      this.lightGfx.fillStyle(0xFF8C00, 0.06);
+      this.lightGfx.fillCircle(tableX + 40, tableY - 10, 60);
+    }
+
+    const shelfX = w * 0.5;
+    const shelfY = h * 0.2;
+    this.mainGfx.fillStyle(tableColor, 0.8);
+    this.mainGfx.fillRect(shelfX, shelfY, 100, 5);
+    this.mainGfx.fillRect(shelfX, shelfY + 35, 100, 5);
+    this.mainGfx.fillRect(shelfX, shelfY + 70, 100, 5);
+    this.mainGfx.fillRect(shelfX - 2, shelfY, 4, 75);
+    this.mainGfx.fillRect(shelfX + 98, shelfY, 4, 75);
+
+    const bookColors = [0xCC3333, 0x3366CC, 0x33AA33, 0xCC9933, 0x9933CC, 0xCC6633, 0x336666];
+    for (let i = 0; i < 7; i++) {
+      const bx = shelfX + 5 + i * 13;
+      const bh = 18 + Math.sin(i * 2) * 5;
+      this.mainGfx.fillStyle(bookColors[i], 0.7);
+      this.mainGfx.fillRect(bx, shelfY - bh + 5, 10, bh);
+    }
+    for (let i = 0; i < 5; i++) {
+      const bx = shelfX + 5 + i * 17;
+      const bh = 16 + Math.sin(i * 3) * 4;
+      this.mainGfx.fillStyle(bookColors[(i + 3) % bookColors.length], 0.7);
+      this.mainGfx.fillRect(bx, shelfY + 35 - bh + 5, 13, bh);
+    }
+
+    const rugColor = tod === 'night' ? 0x3a2028 : 0x8a4050;
+    this.mainGfx.fillStyle(rugColor, 0.3);
+    this.mainGfx.fillEllipse(w * 0.4, h * 0.75, 200, 60);
+    this.mainGfx.lineStyle(1, lerpColor(rugColor, 0xFFFFFF, 0.2), 0.2);
+    this.mainGfx.strokeEllipse(w * 0.4, h * 0.75, 180, 50);
+    this.mainGfx.strokeEllipse(w * 0.4, h * 0.75, 150, 38);
+  }
+
+  private drawForestDetails(w: number, h: number, tod: TimeOfDay) {
+    const ox = -this.cameraX * 0.4;
+
+    const mossColor = tod === 'night' ? 0x0a1a0a : 0x2a5a2a;
+    for (let i = 0; i < 8; i++) {
+      const rx = 100 + i * 140 + ox + Math.sin(i * 3) * 30;
+      const ry = h * 0.6 + Math.sin(i * 2) * 20;
+      this.mainGfx.fillStyle(0x555544, 0.5);
+      this.mainGfx.fillEllipse(rx, ry, 15 + Math.sin(i) * 5, 10);
+      this.mainGfx.fillStyle(mossColor, 0.4);
+      this.mainGfx.fillEllipse(rx - 3, ry - 3, 10, 6);
+    }
+
+    const mushroomPositions = [180, 400, 650, 850];
+    for (const mx of mushroomPositions) {
+      const x = mx + ox;
+      const y = h * 0.68 + Math.sin(mx * 0.1) * 10;
+      this.mainGfx.fillStyle(0xEEDDBB, 0.7);
+      this.mainGfx.fillRect(x - 1.5, y - 5, 3, 8);
+      const capColor = Math.sin(mx) > 0 ? 0xCC3333 : 0xDD8833;
+      this.mainGfx.fillStyle(capColor, 0.8);
+      this.mainGfx.fillEllipse(x, y - 7, 8, 5);
+      if (Math.sin(mx) > 0) {
+        this.mainGfx.fillStyle(0xFFFFFF, 0.6);
+        this.mainGfx.fillCircle(x - 2, y - 8, 1.5);
+        this.mainGfx.fillCircle(x + 2, y - 7, 1);
+      }
+    }
+
+    if (tod === 'night' || tod === 'evening') {
+      this.lightGfx.fillStyle(0x000000, 0.1);
+      this.lightGfx.fillRect(0, 0, w, h);
+    }
+
+    if (tod === 'day' || tod === 'morning') {
+      for (let i = 0; i < 6; i++) {
+        const rx = 100 + i * 150 + Math.sin(i * 5) * 50;
+        this.lightGfx.fillStyle(0xFFFF88, 0.02);
+        this.lightGfx.beginPath();
+        this.lightGfx.moveTo(rx, 0);
+        this.lightGfx.lineTo(rx - 25, h);
+        this.lightGfx.lineTo(rx + 25, h);
+        this.lightGfx.closePath();
+        this.lightGfx.fillPath();
+      }
+    }
+  }
+
+  private drawPondDetails(w: number, _h: number, tod: TimeOfDay) {
+    const waterY = this.scale.height * 0.55;
+
+    const lilyPositions = [200, 350, 500, 700, 850];
+    for (const lx of lilyPositions) {
+      const x = lx - this.cameraX * 0.3;
+      const y = waterY + 20 + Math.sin(this.globalTime + lx * 0.1) * 3;
+      this.mainGfx.fillStyle(0x228B22, 0.6);
+      this.mainGfx.fillEllipse(x, y, 18, 10);
+      if (Math.sin(lx * 0.5) > 0) {
+        this.mainGfx.fillStyle(0xFF69B4, 0.7);
+        for (let p = 0; p < 5; p++) {
+          const angle = (p / 5) * Math.PI * 2;
+          const px = x + Math.cos(angle) * 5;
+          const py = y - 3 + Math.sin(angle) * 3;
+          this.mainGfx.fillEllipse(px, py, 4, 6);
+        }
+        this.mainGfx.fillStyle(0xFFFF00, 0.6);
+        this.mainGfx.fillCircle(x, y - 3, 2);
+      }
+    }
+
+    const reedPositions = [50, 120, w - 80, w - 150, w - 30];
+    for (const rx of reedPositions) {
+      const sway = Math.sin(this.globalTime * 1.2 + rx * 0.05) * 4;
+      this.mainGfx.lineStyle(2, 0x556B2F, 0.6);
+      this.mainGfx.lineBetween(rx, waterY + 30, rx + sway, waterY - 20);
+      this.mainGfx.fillStyle(0x8B7355, 0.7);
+      this.mainGfx.fillEllipse(rx + sway, waterY - 22, 4, 8);
+    }
+
+    if (tod === 'night') {
+      for (let i = 0; i < 3; i++) {
+        const fx = 200 + i * 250;
+        const fy = waterY - 30;
+        this.fgGfx.fillStyle(0xFFFF88, 0.1 + Math.sin(this.globalTime * 2 + i * 3) * 0.08);
+        this.fgGfx.fillCircle(fx + Math.sin(this.globalTime + i) * 20, fy + Math.cos(this.globalTime * 0.7 + i) * 15, 3);
+      }
     }
   }
 
