@@ -4,6 +4,7 @@ import type { TimeOfDay, Weather } from '../../store/gameStore';
 import { NPC_DATA } from '../data/npcs';
 import type { NPCData } from '../data/npcs';
 import { LOCATIONS } from '../data/locations';
+import { QUESTS } from '../data/quests';
 import { getSkyColors, lerpColor } from '../utils/colors';
 import type { SkyColors } from '../utils/colors';
 
@@ -146,18 +147,30 @@ export class GameScene extends Phaser.Scene {
     const store = useGameStore.getState();
     const loc = store.currentLocation;
 
+    const locationNPCMap: Record<string, string[]> = {
+      yard: ['lyoha', 'liza', 'kristina', 'prohor', 'igor'],
+      house: ['igor', 'nena', 'danya', 'lyoha'],
+      forest: ['mag', 'sonya', 'nastya'],
+      pond: ['nastya', 'sonya', 'lyoha'],
+      greenhouse: ['mag', 'danya'],
+    };
+
+    const npcIds = locationNPCMap[loc] || ['lyoha', 'liza'];
+
     this.npcSprites = NPC_DATA
-      .filter(npc => npc.defaultLocation === loc || (loc === 'yard'))
-      .slice(0, 5)
+      .filter(npc => npcIds.includes(npc.id))
       .map(npc => {
         const tod = store.timeOfDay;
         const sched = npc.schedule[tod] || npc.schedule['day'];
+        const baseX = sched.x + (Math.random() - 0.5) * 80;
+        const baseY = Math.max(this.worldHeight * 0.55,
+          Math.min(sched.y + (Math.random() - 0.5) * 40, this.worldHeight - 30));
         return {
           data: npc,
-          x: sched.x + (Math.random() - 0.5) * 60,
-          y: sched.y + (Math.random() - 0.5) * 30,
-          targetX: sched.x,
-          targetY: sched.y,
+          x: baseX,
+          y: baseY,
+          targetX: baseX,
+          targetY: baseY,
           facing: Math.random() > 0.5 ? 'right' as const : 'left' as const,
           animFrame: 0,
           isMoving: false,
@@ -232,13 +245,54 @@ export class GameScene extends Phaser.Scene {
   private interactWithNPC(npc: NPCSprite) {
     const store = useGameStore.getState();
     const npcState = store.npcs[npc.data.id];
-    const dialogueLevel = npcState?.currentDialogueLevel || 0;
-    const dialogues = npc.data.dialogues[dialogueLevel] || npc.data.dialogues[0];
+    const questProgress = npcState?.questProgress;
 
-    store.openDialogue(npc.data.id, dialogues);
-    store.addFriendship(npc.data.id, 2);
+    if (questProgress?.started && !questProgress.completed) {
+      const quest = QUESTS.find(q => q.id === npc.data.questId);
+      if (quest) {
+        const step = quest.steps[questProgress.currentStep];
+        if (step?.requiredItem && store.hasItem(step.requiredItem)) {
+          store.removeItem(step.requiredItem);
+          const nextStep = questProgress.currentStep + 1;
+          if (nextStep >= quest.steps.length) {
+            store.updateNPC(npc.data.id, {
+              questProgress: { ...questProgress, completed: true, currentStep: nextStep },
+              currentDialogueLevel: 1,
+            });
+            store.addFriendship(npc.data.id, quest.reward.friendshipBonus);
+            if (quest.reward.item) {
+              store.addItem({ id: quest.reward.item, name: quest.reward.item, quantity: 1, type: 'reward' });
+            }
+            if (quest.reward.unlock) {
+              store.unlockFeature(quest.reward.unlock);
+              if (quest.reward.unlock === 'greenhouse') {
+                store.unlockLocation('greenhouse');
+              }
+            }
+            const dialogues = npc.data.dialogues[1] || npc.data.dialogues[0];
+            store.openDialogue(npc.data.id, dialogues);
+            this.time.delayedCall(500, () => {
+              store.showNotification(`Квест завершён: ${quest.name}!`);
+            });
+          } else {
+            store.updateNPC(npc.data.id, {
+              questProgress: { ...questProgress, currentStep: nextStep },
+            });
+            store.openDialogue(npc.data.id, [`Отлично! ${step.description} — выполнено!`, quest.steps[nextStep]?.hint || 'Продолжай!']);
+          }
+        } else {
+          const hint = step?.hint || 'Исследуй мир...';
+          store.openDialogue(npc.data.id, [hint]);
+        }
+      }
+    } else if (questProgress?.completed) {
+      const dialogueLevel = npcState?.currentDialogueLevel || 0;
+      const dialogues = npc.data.dialogues[Math.min(dialogueLevel, 2)] || npc.data.dialogues[0];
+      store.openDialogue(npc.data.id, dialogues);
+    } else {
+      const dialogues = npc.data.dialogues[0];
+      store.openDialogue(npc.data.id, dialogues);
 
-    if (!npcState?.questProgress.started) {
       store.updateNPC(npc.data.id, {
         questProgress: {
           questId: npc.data.questId,
@@ -247,10 +301,12 @@ export class GameScene extends Phaser.Scene {
           started: true,
         },
       });
-      this.time.delayedCall(500, () => {
+      this.time.delayedCall(1500, () => {
         store.showNotification(`Новый квест: ${npc.data.questName}`);
       });
     }
+
+    store.addFriendship(npc.data.id, 2);
   }
 
   private interactWithObject(obj: { id: string; name: string; type: string }) {
